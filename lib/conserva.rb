@@ -84,9 +84,10 @@ module Conserva
       end
     end
 
+
     def current_settings
       {conserva_address: @@address,
-       proxy: @@proxy,
+       proxy: ((defined? @@proxy) ? @@proxy : 'no proxy'),
        api_key: @@api_key}
     end
   end
