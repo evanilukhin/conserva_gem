@@ -32,7 +32,7 @@ module Conserva
     def task_info(task_id)
       response = RestClient.get "http://#{@@address}/api/v1/task/#{task_id}",
                                 {params: {api_key: @@api_key}}
-      JSON.parse(response)
+      JSON.parse(response).symbolize_keys
     rescue RestClient::ExceptionWithResponse, RestClient::RequestFailed => exception
       rescue_rest_client_exception exception
     end
@@ -42,13 +42,14 @@ module Conserva
     end
 
     def download_file(task_id, name, path)
-      info = task_info(task_id)
-      File.open("#{path}/#{name}.#{info['output_extension']}", 'w') do |f|
+      result_file_name = "#{path}/#{name}"
+      File.open(result_file_name, 'w') do |f|
         RestClient.get "http://#{@@address}/api/v1/task/#{task_id}/download",
                        {params: {api_key: @@api_key}} do |str|
           f.write str
         end
       end
+      File.new(result_file_name)
     rescue RestClient::ExceptionWithResponse, RestClient::RequestFailed => exception
       rescue_rest_client_exception exception
     end
@@ -62,7 +63,8 @@ module Conserva
 
     # return valid combinations as two dimensional array: [[from,to], [from,to], ...]
     def valid_file_convertations
-      RestClient.get "http://#{@@address}/api/v1/convert_combinations"
+      result_string = RestClient.get "http://#{@@address}/api/v1/convert_combinations"
+      JSON.parse(result_string)
     rescue RestClient::ExceptionWithResponse, RestClient::RequestFailed => exception
       rescue_rest_client_exception exception
     end
@@ -79,6 +81,8 @@ module Conserva
           raise InvalidRequestException
         when RestClient::InternalServerError
           raise ServerErrorException
+        when RestClient::Locked
+          raise TaskLockedException
         else
           raise exception
       end
@@ -87,7 +91,7 @@ module Conserva
 
     def current_settings
       {conserva_address: @@address,
-       proxy: ((defined? @@proxy) ? @@proxy : 'no proxy'),
+       proxy: (defined? @@proxy) ? @@proxy : 'no proxy',
        api_key: @@api_key}
     end
   end
