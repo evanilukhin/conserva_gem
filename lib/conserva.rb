@@ -1,5 +1,4 @@
 require 'rest-client'
-require 'pry'
 require 'conserva/exceptions'
 
 module Conserva
@@ -19,11 +18,7 @@ module Conserva
                                  output_extension: result_extension,
                                  api_key: @@api_key,
                                  file: input_file
-      if JSON.parse(response)['id']
-        JSON.parse(response)['id']
-      else
-        raise ServerErrorException
-      end
+      JSON.parse(response)['id'] || (raise ServerErrorException)
 
     rescue RestClient::ExceptionWithResponse, RestClient::RequestFailed => exception
       rescue_rest_client_exception exception
@@ -38,7 +33,7 @@ module Conserva
     end
 
     def task_ready?(task_id)
-      task_info(task_id)['state'] == SUCCESS
+      task_info(task_id)[:state] == SUCCESS
     end
 
     def download_file(task_id, name, path)
@@ -49,7 +44,8 @@ module Conserva
           f.write str
         end
       end
-      File.new(result_file_name)
+      downloaded_file = File.new(result_file_name)
+      task_info(task_id)
     rescue RestClient::ExceptionWithResponse, RestClient::RequestFailed => exception
       rescue_rest_client_exception exception
     end
@@ -69,6 +65,12 @@ module Conserva
       rescue_rest_client_exception exception
     end
 
+    def current_settings
+      {conserva_address: @@address,
+       proxy: (defined? @@proxy) ? @@proxy : 'no proxy',
+       api_key: @@api_key}
+    end
+
     def rescue_rest_client_exception(exception)
       case exception
         when RestClient::UnprocessableEntity
@@ -86,13 +88,6 @@ module Conserva
         else
           raise exception
       end
-    end
-
-
-    def current_settings
-      {conserva_address: @@address,
-       proxy: (defined? @@proxy) ? @@proxy : 'no proxy',
-       api_key: @@api_key}
     end
   end
 end
