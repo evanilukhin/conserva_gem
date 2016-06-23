@@ -1,18 +1,20 @@
 require 'rest-client'
 require 'conserva/exceptions'
-
+require 'backports'
+require 'pry'
 module Conserva
   SUCCESS = 'succ'
 
   class << self
-    def initialize(conserva_address, api_key, proxy = nil)
+    def initialize(conserva_address, api_key, options = {})
       @@address = conserva_address
       @@api_key = api_key
-      RestClient.proxy = proxy
+      default_options = {proxy: nil}
+      options.reverse_merge! default_options
+      RestClient.proxy = options[:proxy]
     end
 
-    def create_task(input_file, result_extension)
-      input_extension = File.extname(input_file)[1..-1]
+    def create_task(input_file, input_extension, result_extension)
       response = RestClient.post "http://#{@@address}/api/v1/task",
                                  input_extension: input_extension,
                                  output_extension: result_extension,
@@ -36,16 +38,14 @@ module Conserva
       task_info(task_id)[:state] == SUCCESS
     end
 
-    def download_file(task_id, name, path)
-      result_file_name = "#{path}/#{name}"
-      File.open(result_file_name, 'w') do |f|
-        RestClient.get "http://#{@@address}/api/v1/task/#{task_id}/download",
-                       {params: {api_key: @@api_key}} do |str|
-          f.write str
-        end
-      end
-      downloaded_file = File.new(result_file_name)
-      task_info(task_id)
+    def download_file(task_id, options = {})
+      default_options = {check_sum: true}
+      options.reverse_merge! default_options
+
+      downloaded_file = RestClient.get "http://#{@@address}/api/v1/task/#{task_id}/download",
+                                             {params: {api_key: @@api_key}}
+      raise DownloadError if options[:check_sum] && (Digest::SHA256.hexdigest(downloaded_file) != task_info(task_id)[:result_file_sha256])
+      downloaded_file
     rescue RestClient::ExceptionWithResponse, RestClient::RequestFailed => exception
       rescue_rest_client_exception exception
     end
@@ -74,17 +74,17 @@ module Conserva
     def rescue_rest_client_exception(exception)
       case exception
         when RestClient::UnprocessableEntity
-          raise WrongParametersException
+          raise WrongParameters
         when RestClient::Forbidden
-          raise PermissionDeniedException
+          raise PermissionDenied
         when RestClient::ResourceNotFound
-          raise WrongResourceException
+          raise WrongResource
         when RestClient::NotAcceptable
-          raise InvalidRequestException
+          raise InvalidRequest
         when RestClient::InternalServerError
-          raise ServerErrorException
+          raise ServerError
         when RestClient::Locked
-          raise TaskLockedException
+          raise TaskLocked
         else
           raise exception
       end

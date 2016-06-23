@@ -23,6 +23,9 @@ class FakeConservaAPI < Sinatra::Base
             status 403
           when '3'
             status 500
+          when '4'
+            status 200
+            {'result_file_sha256': 'efd3aca2394b25e57526c0ebb6934710e426e403db1974d7dff785cf8bcdea15'}.to_json
           else
             status 404
         end
@@ -41,7 +44,7 @@ class FakeConservaAPI < Sinatra::Base
 
       get '/task/:id/download' do
         case params[:id]
-          when '1' # finished task
+          when '1', '4' # finished task
             send_file "#{File.dirname(__FILE__)}/../files/input.txt", filename: 'result.txt'
           when '2'
             status 202

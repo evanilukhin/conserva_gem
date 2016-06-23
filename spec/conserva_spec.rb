@@ -18,12 +18,12 @@ describe Conserva do
     end
 
     it 'should send file' do
-      expect(Conserva.create_task(File.new("#{File.dirname(__FILE__)}/files/input.txt"), 'txt')).to eq(1)
+      expect(Conserva.create_task(File.new("#{File.dirname(__FILE__)}/files/input.txt"),'tzt', 'txt')).to eq(1)
     end
 
     it 'should download file' do
-      downloaded_file = Conserva.download_file(1, 'result.txt', "#{File.dirname(__FILE__)}/../tmp")
-      checksum_downloaded_file = Digest::SHA256.file(downloaded_file).hexdigest
+      downloaded_file = Conserva.download_file(1, check_sum: false)
+      checksum_downloaded_file = Digest::SHA256.hexdigest(downloaded_file)
       expect(checksum_downloaded_file).to eq('5cd3aca2394b25e57526c0ebb6934710e426e403db1974d7dff785cf8bcdea25')
     end
 
@@ -34,26 +34,30 @@ describe Conserva do
 
   context 'forwarding exceptions' do
     it 'should intercept not authorized' do
-      expect { Conserva.task_info(2) }.to raise_error(PermissionDeniedException)
+      expect { Conserva.task_info(2) }.to raise_error(Conserva::PermissionDenied)
       end
     it 'should intercept server error' do
-      expect { Conserva.task_info(3) }.to raise_error(ServerErrorException)
+      expect { Conserva.task_info(3) }.to raise_error(Conserva::ServerError)
     end
 
     it 'should intercept not found task' do
-      expect { Conserva.task_info(4) }.to raise_error(WrongResourceException)
+      expect { Conserva.task_info(5) }.to raise_error(Conserva::WrongResource)
     end
 
     it 'should intercept not acceptable' do
-      expect { Conserva.create_task(File.new("#{File.dirname(__FILE__)}/files/input.txt"), 'pdf') }.to raise_error(InvalidRequestException)
+      expect { Conserva.create_task(File.new("#{File.dirname(__FILE__)}/files/input.txt"),'txt', 'pdf') }.to raise_error(Conserva::InvalidRequest)
     end
 
     it 'should intercept wrong parameters' do
-      expect { Conserva.create_task(File.new("#{File.dirname(__FILE__)}/files/input.txt"), 'tmp') }.to raise_error(WrongParametersException)
+      expect { Conserva.create_task(File.new("#{File.dirname(__FILE__)}/files/input.txt"),'txt', 'tmp') }.to raise_error(Conserva::WrongParameters)
     end
 
     it 'should task locked exception' do
-      expect { Conserva.remove_task(2) }.to raise_error(TaskLockedException)
+      expect { Conserva.remove_task(2) }.to raise_error(Conserva::TaskLocked)
+    end
+
+    it 'should rised downloaded error' do
+      expect { Conserva.download_file(4) }.to raise_error(Conserva::DownloadError)
     end
 
   end
