@@ -3,7 +3,7 @@ require 'conserva/exceptions'
 require 'backports'
 require 'pry'
 module Conserva
-  SUCCESS = 'succ'
+  FINISHED = 'finished'
 
   class << self
     def initialize(conserva_address, api_key, options = {})
@@ -35,7 +35,7 @@ module Conserva
     end
 
     def task_ready?(task_id)
-      task_info(task_id)[:state] == SUCCESS
+      task_info(task_id)[:state] == FINISHED
     end
 
     def download_file(task_id, options = {})
