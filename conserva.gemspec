@@ -17,11 +17,12 @@ Gem::Specification.new do |s|
   # Dependencies
   s.add_dependency 'rest-client'
   s.add_dependency 'rspec'
+  s.add_dependency 'backports'
   s.add_development_dependency 'json'
   s.add_development_dependency 'pry'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'webmock'
   s.add_development_dependency 'sinatra'
   s.add_development_dependency 'sinatra-contrib'
-  s.add_development_dependency 'bundler', '~> 1.5'
+  s.add_development_dependency 'bundler'
 end
