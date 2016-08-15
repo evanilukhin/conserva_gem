@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'rest-client'
   s.add_dependency 'rspec'
   s.add_dependency 'backports'
+  s.add_dependency 'net-ping'
   s.add_development_dependency 'json'
   s.add_development_dependency 'pry'
   s.add_development_dependency 'rake'

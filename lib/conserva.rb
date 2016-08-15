@@ -2,6 +2,7 @@ require 'rest-client'
 require 'conserva/exceptions'
 require 'backports'
 require 'pry'
+require 'net/ping/http'
 module Conserva
   FINISHED = 'finished'
 
@@ -71,6 +72,11 @@ module Conserva
        api_key: @@api_key}
     end
 
+    def is_alive?
+      ping_conserva = Net::Ping::HTTP.new("http://#{@@address}/api/v1/convert_combinations")
+      ping_conserva.ping?
+    end
+
     def rescue_rest_client_exception(exception)
       case exception
         when RestClient::UnprocessableEntity
@@ -82,7 +88,7 @@ module Conserva
         when RestClient::NotAcceptable
           raise InvalidRequest
         when RestClient::InternalServerError
-          raise ServerError
+          raise InternalServerError
         when RestClient::Locked
           raise TaskLocked
         else
