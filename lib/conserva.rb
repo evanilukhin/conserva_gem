@@ -72,7 +72,7 @@ module Conserva
        api_key: @@api_key}
     end
 
-    def is_alive?
+    def alive?
       ping_conserva = Net::Ping::HTTP.new("http://#{@@address}/api/v1/convert_combinations")
       ping_conserva.ping?
     end
