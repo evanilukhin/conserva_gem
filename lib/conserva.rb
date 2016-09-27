@@ -44,7 +44,7 @@ module Conserva
       options.reverse_merge! default_options
 
       downloaded_file = RestClient.get "http://#{@@address}/api/v1/task/#{task_id}/download",
-                                             {params: {api_key: @@api_key}}
+                                       {params: {api_key: @@api_key}}
       raise DownloadError if options[:check_sum] && (Digest::SHA256.hexdigest(downloaded_file) != task_info(task_id)[:result_file_sha256])
       downloaded_file
     rescue RestClient::ExceptionWithResponse, RestClient::RequestFailed => exception
@@ -67,14 +67,18 @@ module Conserva
     end
 
     def current_settings
-      {conserva_address: @@address,
-       proxy: (defined? @@proxy) ? @@proxy : 'no proxy',
-       api_key: @@api_key}
+      if valid_settings
+        {conserva_address: @@address,
+         proxy: (defined? @@proxy) ? @@proxy : nil,
+         api_key: @@api_key}
+      end
     end
 
     def alive?
-      ping_conserva = Net::Ping::HTTP.new("http://#{@@address}/api/v1/convert_combinations")
-      ping_conserva.ping?
+      if valid_settings
+        ping_conserva = Net::Ping::HTTP.new("http://#{@@address}/api/v1/convert_combinations")
+        ping_conserva.ping?
+      end
     end
 
     def rescue_rest_client_exception(exception)
@@ -93,6 +97,15 @@ module Conserva
           raise TaskLocked
         else
           raise exception
+      end
+    end
+
+    private
+    def valid_settings
+      if defined?(@@address) && defined?(@@api_key)
+        true
+      else
+        raise GemUninitialized
       end
     end
   end

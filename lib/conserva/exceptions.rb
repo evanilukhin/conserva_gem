@@ -2,6 +2,9 @@ module Conserva
   # base class for conserva exceptions
   ConvertError = Class.new(StandardError)
 
+  # Check application
+  GemUninitialized = Class.new(ConvertError)
+
   # Check data
   ClientError = Class.new(ConvertError)
   # Try later
