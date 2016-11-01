@@ -1,7 +1,5 @@
 require 'rest-client'
 require 'conserva/exceptions'
-require 'backports'
-require 'pry'
 require 'net/ping/http'
 module Conserva
   FINISHED = 'finished'
